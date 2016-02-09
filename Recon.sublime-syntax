@@ -1,0 +1,190 @@
+%YAML 1.2
+---
+name: Recon
+file_extensions: [recon, swim]
+scope: source.recon
+
+variables:
+    name_start_char: '[A-Z_a-z]' # '[A-Z_a-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u02FF\u0370-\u037D\u037F-\u1FFF\u200C-\u200D\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF\uF900-\uFDCF\uFDF0-\uFFFD\U00010000-\U000EFFFF]'
+    name_char: '[-0-9A-Z_a-z]' # '[-0-9A-Z_a-z\u00B7\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u02FF\u0370-\u037D\u037F-\u1FFF\u200C-\u200D\u203F-\u2040\u2070-\u218F\u2C00-\u2FEF\u0300-\u036F\u3001-\uD7FF\uF900-\uFDCF\uFDF0-\uFFFD\U00010000-\U000EFFFF]'
+    base64_char: '[A-Za-z0-9+/]'
+    base64_eq_char: '[A-Za-z0-9+/=]'
+    ident: '{{name_start_char}}{{name_char}}*'
+
+contexts:
+  main:
+    - include: attr
+    - include: block
+    - include: record
+    - include: markup
+    - include: ident
+    - include: string
+    - include: number
+    - include: data
+    - match: ':'
+      captures:
+        0: punctuation.separator.slot.recon
+      push: slot
+    - match: '[,;]'
+      scope: punctuation.separator.block.recon
+
+  block:
+    - match: '\('
+      captures:
+        0: punctuation.definition.block.begin.recon
+      push:
+        - meta_scope: meta.structure.block.recon
+        - match: '\)'
+          captures:
+            0: punctuation.definition.block.end.recon
+          pop: true
+        - include: attr
+        - include: block
+        - include: record
+        - include: markup
+        - include: ident
+        - include: string
+        - include: number
+        - include: data
+        - match: ':'
+          captures:
+            0: punctuation.separator.slot.recon
+          push: slot
+        - match: '[,;]'
+          scope: punctuation.separator.item.recon
+
+  attr:
+    - match: '@{{ident}}'
+      scope: storage.type.attr.recon
+
+  slot:
+    - meta_content_scope: meta.structure.slot.value.recon
+    - include: attr
+    - include: block
+    - include: record
+    - include: markup
+    - include: ident_value
+    - include: string
+    - include: number
+    - include: data
+    - match: '[,;\r\n]'
+      captures:
+        0: punctuation.separator.record.recon
+      pop: true
+
+  record:
+    - match: '\{'
+      captures:
+        0: punctuation.definition.record.begin.recon
+      push:
+        - meta_scope: meta.structure.record.recon
+        - match: '\}'
+          captures:
+            0: punctuation.definition.record.end.recon
+          pop: true
+        - include: attr
+        - include: block
+        - include: record
+        - include: markup
+        - include: ident
+        - include: string
+        - include: number
+        - include: data
+        - match: ':'
+          captures:
+            0: punctuation.separator.slot.recon
+          push: slot
+        - match: '[,;]'
+          scope: punctuation.separator.item.recon
+
+  markup:
+    - match: '\['
+      captures:
+        0: punctuation.definition.markup.begin.recon
+      push:
+        - meta_scope: markup.other.recon
+        - match: '\]'
+          captures:
+            0: punctuation.definition.markup.end.recon
+          pop: true
+        - include: attr
+        - include: block
+        - include: record
+        - include: markup
+        - match: '\\[\\/@{}\[\]bfnrt]'
+          scope: constant.character.escape.recon
+        - match: \\.
+          scope: invalid.illegal.markup.escape.recon
+        - match: '[\@\{\}\[\]\b\f\n\r\t]'
+          scope: invalid.illegal.markup.char.recon
+
+  ident:
+    - match: '{{ident}}'
+      scope: variable.other.ident.recon
+
+  ident_value:
+    - match: '{{ident}}'
+      scope: string.unquoted.ident.recon
+
+  string:
+    - match: '"'
+      captures:
+        0: punctuation.definition.string.begin.recon
+      push:
+        - meta_scope: string.quoted.double.recon
+        - match: '"'
+          captures:
+            0: punctuation.definition.string.end.recon
+          pop: true
+        - match: '\\[\\/@{}\[\]bfnrt]'
+          scope: constant.character.escape.recon
+        - match: \\.
+          scope: invalid.illegal.string.escape.recon
+        - match: '[\@\{\}\[\]\b\f\n\r\t]'
+          scope: invalid.illegal.string.char.recon
+
+  number:
+    - match: |-
+        (?x:
+          -?
+          (?:
+            0
+            |
+            [1-9]
+            [0-9]*
+          )
+          (?:
+            (?:
+              \.
+              [0-9]+
+            )?
+            (?:
+              [Ee]
+              [+-]?
+              [0-9]+
+            )?
+          )?
+        )
+      scope: constant.numeric.recon
+
+  data:
+    - match: |-
+        (?x:
+          (%)
+          (
+            {{base64_char}}{4}*
+            (?:
+              {{base64_char}}{2}
+              (?:
+                {{base64_char}}=
+                |
+                ==
+              )
+            )?
+          )
+          ({{base64_eq_char}}*)
+        )
+      captures:
+        1: keyword.operator.data.recon
+        2: constant.other.data.recon
+        3: invalid.illegal.data.base64.recon
