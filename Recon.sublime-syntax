@@ -58,8 +58,30 @@ contexts:
           scope: punctuation.separator.item.recon
 
   attr:
-    - match: '@{{ident}}'
-      scope: storage.type.attr.recon
+    - match: '@'
+      captures:
+        0: punctuation.definition.attr.recon
+      push:
+        - meta_scope: storage.type.attr.recon
+        - match: '{{ident}}?'
+          captures:
+            0: punctuation.separator.slot.recon
+        - match: '"'
+          captures:
+            0: punctuation.definition.string.begin.recon
+          push:
+            - match: '"'
+              captures:
+                0: punctuation.definition.string.end.recon
+              pop: true
+            - match: '\\[\\/@{}\[\]bfnrt]'
+              scope: constant.character.escape.recon
+            - match: \\.
+              scope: invalid.illegal.string.escape.recon
+            - match: '[\@\{\}\[\]\b\f\n\r\t]'
+              scope: invalid.illegal.string.char.recon
+        - match: '(?=\S)'
+          pop: true
 
   slot:
     - meta_content_scope: meta.structure.slot.value.recon
