@@ -1,15 +1,17 @@
 %YAML 1.2
 ---
 name: Recon
-file_extensions: [recon, swim]
+file_extensions:
+  - recon
+  - recondb
 scope: source.recon
 
 variables:
-    name_start_char: '[A-Z_a-z]' # '[A-Z_a-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u02FF\u0370-\u037D\u037F-\u1FFF\u200C-\u200D\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF\uF900-\uFDCF\uFDF0-\uFFFD\U00010000-\U000EFFFF]'
-    name_char: '[-0-9A-Z_a-z]' # '[-0-9A-Z_a-z\u00B7\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u02FF\u0370-\u037D\u037F-\u1FFF\u200C-\u200D\u203F-\u2040\u2070-\u218F\u2C00-\u2FEF\u0300-\u036F\u3001-\uD7FF\uF900-\uFDCF\uFDF0-\uFFFD\U00010000-\U000EFFFF]'
-    base64_char: '[A-Za-z0-9+/]'
-    base64_eq_char: '[A-Za-z0-9+/=]'
-    ident: '{{name_start_char}}{{name_char}}*'
+  name_start_char: '[A-Z_a-z]' # '[A-Z_a-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u02FF\u0370-\u037D\u037F-\u1FFF\u200C-\u200D\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF\uF900-\uFDCF\uFDF0-\uFFFD\U00010000-\U000EFFFF]'
+  name_char: '[-0-9A-Z_a-z]' # '[-0-9A-Z_a-z\u00B7\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u02FF\u0370-\u037D\u037F-\u1FFF\u200C-\u200D\u203F-\u2040\u2070-\u218F\u2C00-\u2FEF\u0300-\u036F\u3001-\uD7FF\uF900-\uFDCF\uFDF0-\uFFFD\U00010000-\U000EFFFF]'
+  base64_char: '[A-Za-z0-9+/]'
+  base64_eq_char: '[A-Za-z0-9+/=]'
+  ident: '{{name_start_char}}{{name_char}}*'
 
 contexts:
   main:
@@ -21,6 +23,7 @@ contexts:
     - include: string
     - include: number
     - include: data
+    - include: comment
     - match: ':'
       captures:
         0: punctuation.separator.slot.recon
@@ -46,6 +49,7 @@ contexts:
         - include: string
         - include: number
         - include: data
+        - include: comment
         - match: ':'
           captures:
             0: punctuation.separator.slot.recon
@@ -67,6 +71,7 @@ contexts:
     - include: string
     - include: number
     - include: data
+    - include: comment
     - match: '[,;\r\n]'
       captures:
         0: punctuation.separator.record.recon
@@ -90,6 +95,7 @@ contexts:
         - include: string
         - include: number
         - include: data
+        - include: comment
         - match: ':'
           captures:
             0: punctuation.separator.slot.recon
@@ -188,3 +194,9 @@ contexts:
         1: keyword.operator.data.recon
         2: constant.other.data.recon
         3: invalid.illegal.data.base64.recon
+
+  comment:
+    - match: (#).*$\n?
+      scope: comment.line.hash.recon
+      captures:
+        1: punctuation.definition.comment.recon

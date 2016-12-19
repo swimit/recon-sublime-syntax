@@ -2,6 +2,7 @@
 
 Requires Sublime Text 3 build 3103 or later.  Get Recon libraries for
 [JavaScript](https://github.com/swimit/recon-js),
+[Java](https://github.com/swimit/recon-java),
 [Swift](https://github.com/swimit/recon-swift), and
 [Scala](https://github.com/swimit/recon-scala).
 
